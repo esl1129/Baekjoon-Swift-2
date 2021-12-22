@@ -4,5 +4,6 @@
         <page name='2210'/>
         <page name='2234'/>
         <page name='2156'/>
+        <page name='test'/>
     </pages>
 </playground>
