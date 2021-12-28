@@ -28,5 +28,7 @@
         <page name='1890'/>
         <page name='1986'/>
         <page name='1941'/>
+        <page name='4179'/>
+        <page name='DoubleStackQueue'/>
     </pages>
 </playground>
