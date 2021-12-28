@@ -1,4 +1,61 @@
 import Foundation
+final class FileIO {
+    private let buffer:[UInt8]
+    private var index: Int = 0
+    
+    init(fileHandle: FileHandle = FileHandle.standardInput) {
+        
+        buffer = Array(try! fileHandle.readToEnd()!)+[UInt8(0)] // 인덱스 범위 넘어가는 것 방지
+    }
+    
+    @inline(__always) private func read() -> UInt8 {
+        defer { index += 1 }
+        
+        return buffer[index]
+    }
+    
+    @inline(__always) func readInt() -> Int {
+        var sum = 0
+        var now = read()
+        var isPositive = true
+        
+        while now == 10
+                || now == 32 { now = read() } // 공백과 줄바꿈 무시
+        if now == 45 { isPositive.toggle(); now = read() } // 음수 처리
+        while now >= 48, now <= 57 {
+            sum = sum * 10 + Int(now-48)
+            now = read()
+        }
+        
+        return sum * (isPositive ? 1:-1)
+    }
+    
+    @inline(__always) func readString() -> String {
+        var now = read()
+        
+        while now == 10 || now == 32 { now = read() } // 공백과 줄바꿈 무시
+        let beginIndex = index-1
+        
+        while now != 10,
+              now != 32,
+              now != 0 { now = read() }
+        
+        return String(bytes: Array(buffer[beginIndex..<(index-1)]), encoding: .ascii)!
+    }
+    
+    @inline(__always) func readByteSequenceWithoutSpaceAndLineFeed() -> [UInt8] {
+        var now = read()
+        
+        while now == 10 || now == 32 { now = read() } // 공백과 줄바꿈 무시
+        let beginIndex = index-1
+        
+        while now != 10,
+              now != 32,
+              now != 0 { now = read() }
+        
+        return Array(buffer[beginIndex..<(index-1)])
+    }
+}
 
 struct DoubleStackQueue<Element> {
     private var inbox: [Element] = []
@@ -59,42 +116,32 @@ func solution() -> Int{
     func isBound(_ xx: Int, _ yy: Int) -> Bool{
         return xx >= 0 && yy >= 0 && xx < N && yy < M
     }
-    let line = readLine()!.components(separatedBy: " ").map{Int(String($0))!}
-    let N = line[1]
-    let M = line[0]
-    
-    var board = [[Int]]()
-        for _ in 0..<N{
-            board.append(readLine()!.components(separatedBy: " ").map{Int(String($0))!})
-        
-    }
+    let fIO = FileIO()
+    let M = fIO.readInt()
+    let N = fIO.readInt()
     var q = DoubleStackQueue<Point>()
-    var zeroCnt = 0
-        for i in 0..<N{
-            for j in 0..<M{
-                if board[i][j] == 0 { zeroCnt += 1 }
-                if board[i][j] == 1 { q.append(Point(i, j)) }
-            }
-        }
     
-    if zeroCnt == 0 { return 0 }
-    var answer = 1
-    while !q.isEmpty{
-        for _ in q.indices{
-            let a = q.removeFirst()
-            for k in 0..<4{
-                let xx = a.x+dx[k]
-                let yy = a.y+dy[k]
-                if !isBound(xx, yy) || board[xx][yy] != 0 { continue }
-                zeroCnt -= 1
-                if zeroCnt == 0 { return answer}
-                board[xx][yy] = 1
-                q.append(Point(xx, yy))
-            }
+    var board = [[Int]](repeating: [], count: N)
+    for i in 0..<N{
+        for j in 0..<M{
+            let n = fIO.readInt()
+            board[i].append(n)
+            if n == 1 { q.enqueue(Point(i, j)) }
         }
-        answer += 1
     }
-    return -1
+    while !q.isEmpty{
+        let a = q.dequeue()
+        for k in 0..<4{
+            let xx = a.x+dx[k]
+            let yy = a.y+dy[k]
+            if !isBound(xx, yy) || board[xx][yy] != 0 { continue }
+            board[xx][yy] = board[a.x][a.y]+1
+            q.enqueue(Point(xx, yy))
+        }
+    }
+    let a = board.flatMap{$0}
+    if a.contains(0) { return -1 }
+    return a.max()!-1
 }
 
 print(solution())
