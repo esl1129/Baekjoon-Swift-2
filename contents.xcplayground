@@ -30,5 +30,7 @@
         <page name='1941'/>
         <page name='4179'/>
         <page name='DoubleStackQueue'/>
+        <page name='11048'/>
+        <page name='FILEIO'/>
     </pages>
 </playground>

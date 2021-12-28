@@ -1,5 +1,47 @@
 import Foundation
 
+struct DoubleStackQueue<Element> {
+    private var inbox: [Element] = []
+    private var outbox: [Element] = []
+    
+    var isEmpty: Bool{
+        return inbox.isEmpty && outbox.isEmpty
+    }
+    
+    var count: Int{
+        return inbox.count + outbox.count
+    }
+    
+    var front: Element? {
+        return outbox.last ?? inbox.first
+    }
+    
+    init() { }
+    
+    init(_ array: [Element]) {
+        self.init()
+        self.inbox = array
+    }
+    
+    mutating func enqueue(_ n: Element) {
+        inbox.append(n)
+    }
+    
+    mutating func dequeue() -> Element {
+        if outbox.isEmpty {
+            outbox = inbox.reversed()
+            inbox.removeAll()
+        }
+        return outbox.removeLast()
+    }
+}
+
+extension DoubleStackQueue: ExpressibleByArrayLiteral {
+    init(arrayLiteral elements: Element...) {
+        self.init()
+        inbox = elements
+    }
+}
 struct Point: Hashable{
     let x: Int
     let y: Int
@@ -30,30 +72,30 @@ func solution() -> Int{
             board[h].append(readLine()!.components(separatedBy: " ").map{Int(String($0))!})
         }
     }
-    var q = [Point]()
+    var q = DoubleStackQueue<Point>()
     var zeroCnt = 0
     for h in 0..<H{
         for i in 0..<N{
             for j in 0..<M{
                 if board[h][i][j] == 0 { zeroCnt += 1 }
-                if board[h][i][j] == 1 { q.append(Point(i, j, h)) }
+                if board[h][i][j] == 1 { q.enqueue(Point(i, j, h)) }
             }
         }
     }
     if zeroCnt == 0 { return 0 }
     var answer = 1
     while !q.isEmpty{
-        for _ in q.indices{
-            let a = q.removeFirst()
+        for _ in 0..<q.count{
+            let a = q.dequeue()
             for k in 0..<6{
                 let xx = a.x+dx[k]
                 let yy = a.y+dy[k]
                 let zz = a.z+dz[k]
                 if !isBound(xx, yy, zz) || board[zz][xx][yy] != 0 { continue }
                 zeroCnt -= 1
-                if zeroCnt == 0 { return answer}
+                if zeroCnt == 0 { return answer }
                 board[zz][xx][yy] = 1
-                q.append(Point(xx, yy, zz))
+                q.enqueue(Point(xx, yy, zz))
             }
         }
         answer += 1
