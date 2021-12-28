@@ -1,4 +1,61 @@
 import Foundation
+final class FileIO {
+    private let buffer:[UInt8]
+    private var index: Int = 0
+    
+    init(fileHandle: FileHandle = FileHandle.standardInput) {
+        
+        buffer = Array(try! fileHandle.readToEnd()!)+[UInt8(0)] // 인덱스 범위 넘어가는 것 방지
+    }
+    
+    @inline(__always) private func read() -> UInt8 {
+        defer { index += 1 }
+        
+        return buffer[index]
+    }
+    
+    @inline(__always) func readInt() -> Int {
+        var sum = 0
+        var now = read()
+        var isPositive = true
+        
+        while now == 10
+                || now == 32 { now = read() } // 공백과 줄바꿈 무시
+        if now == 45 { isPositive.toggle(); now = read() } // 음수 처리
+        while now >= 48, now <= 57 {
+            sum = sum * 10 + Int(now-48)
+            now = read()
+        }
+        
+        return sum * (isPositive ? 1:-1)
+    }
+    
+    @inline(__always) func readString() -> String {
+        var now = read()
+        
+        while now == 10 || now == 32 { now = read() } // 공백과 줄바꿈 무시
+        let beginIndex = index-1
+        
+        while now != 10,
+              now != 32,
+              now != 0 { now = read() }
+        
+        return String(bytes: Array(buffer[beginIndex..<(index-1)]), encoding: .ascii)!
+    }
+    
+    @inline(__always) func readByteSequenceWithoutSpaceAndLineFeed() -> [UInt8] {
+        var now = read()
+        
+        while now == 10 || now == 32 { now = read() } // 공백과 줄바꿈 무시
+        let beginIndex = index-1
+        
+        while now != 10,
+              now != 32,
+              now != 0 { now = read() }
+        
+        return Array(buffer[beginIndex..<(index-1)])
+    }
+}
 
 struct DoubleStackQueue<Element> {
     private var inbox: [Element] = []
@@ -42,6 +99,7 @@ extension DoubleStackQueue: ExpressibleByArrayLiteral {
         inbox = elements
     }
 }
+
 struct Point: Hashable{
     let x: Int
     let y: Int
@@ -61,46 +119,36 @@ func solution() -> Int{
     func isBound(_ xx: Int, _ yy: Int, _ zz: Int) -> Bool{
         return xx >= 0 && yy >= 0 && zz >= 0 && xx < N && yy < M && zz < H
     }
-    let line = readLine()!.components(separatedBy: " ").map{Int(String($0))!}
-    let N = line[1]
-    let M = line[0]
-    let H = line[2]
-    
-    var board = [[[Int]]](repeating: [], count: H)
-    for h in 0..<H{
-        for _ in 0..<N{
-            board[h].append(readLine()!.components(separatedBy: " ").map{Int(String($0))!})
-        }
-    }
+    let fIO = FileIO()
+    let M = fIO.readInt()
+    let N = fIO.readInt()
+    let H = fIO.readInt()
     var q = DoubleStackQueue<Point>()
-    var zeroCnt = 0
+    
+    var board = [[[Int]]](repeating: [[Int]](repeating: [], count: N), count: H)
     for h in 0..<H{
         for i in 0..<N{
             for j in 0..<M{
-                if board[h][i][j] == 0 { zeroCnt += 1 }
-                if board[h][i][j] == 1 { q.enqueue(Point(i, j, h)) }
+                let n = fIO.readInt()
+                board[h][i].append(n)
+                if n == 1 { q.enqueue(Point(i, j, h)) }
             }
         }
     }
-    if zeroCnt == 0 { return 0 }
-    var answer = 1
     while !q.isEmpty{
-        for _ in 0..<q.count{
-            let a = q.dequeue()
-            for k in 0..<6{
-                let xx = a.x+dx[k]
-                let yy = a.y+dy[k]
-                let zz = a.z+dz[k]
-                if !isBound(xx, yy, zz) || board[zz][xx][yy] != 0 { continue }
-                zeroCnt -= 1
-                if zeroCnt == 0 { return answer }
-                board[zz][xx][yy] = 1
-                q.enqueue(Point(xx, yy, zz))
-            }
+        let a = q.dequeue()
+        for k in 0..<6{
+            let xx = a.x+dx[k]
+            let yy = a.y+dy[k]
+            let zz = a.z+dz[k]
+            if !isBound(xx, yy, zz) || board[zz][xx][yy] != 0 { continue }
+            board[zz][xx][yy] = board[a.z][a.x][a.y]+1
+            q.enqueue(Point(xx, yy, zz))
         }
-        answer += 1
     }
-    return -1
+    let a = board.flatMap{$0}.flatMap{$0}
+    if a.contains(0) { return -1 }
+    return a.max()!-1
 }
 
 print(solution())
