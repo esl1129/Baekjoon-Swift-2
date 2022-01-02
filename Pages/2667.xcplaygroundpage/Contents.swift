@@ -115,7 +115,7 @@ func solution() -> String{
     var visited = [[Bool]](repeating: [Bool](repeating: false, count: N), count: N)
     
     var answer = 0
-    var answerArr: [Int] = []
+    var answerArr: [String] = []
     for _ in 0..<N{
         board.append(fIO.readString().map{String($0)})
     }
@@ -138,9 +138,9 @@ func solution() -> String{
                     cnt += 1
                 }
             }
-            answerArr.append(cnt)
+            answerArr.append(String(cnt))
         }
     }
-    return "\(answer)\n"+answerArr.sorted().map{String($0)}.joined(separator: "\n")
+    return "\(answer)\n"+answerArr.sorted().joined(separator: "\n")
 }
 print(solution())
