@@ -6,4 +6,4 @@ Algorithm 문제 풀이
 
 사용언어 : Swift
 
-목표 : 주 3회 이상 COMMIT
+목표 : 1일 1커밋 COMMIT
